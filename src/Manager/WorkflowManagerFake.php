@@ -82,10 +82,10 @@ class WorkflowManagerFake implements WorkflowManagerInterface
     }
 
     /**
-     * @param class-string<AbstractWorkflow>|callable(AbstractWorkflow, ?string): bool $workflowClass
-     * @param null|callable(AbstractWorkflow, ?string): bool                          $callback
+     * @param callable(AbstractWorkflow, ?string): bool|class-string<AbstractWorkflow> $workflowClass
+     * @param null|callable(AbstractWorkflow, ?string): bool                           $callback
      */
-    public function assertStarted(string|callable $workflowClass, ?callable $callback = null): void
+    public function assertStarted(callable|string $workflowClass, ?callable $callback = null): void
     {
         if (\is_callable($workflowClass)) {
             $callback = $workflowClass;
@@ -99,10 +99,10 @@ class WorkflowManagerFake implements WorkflowManagerInterface
     }
 
     /**
-     * @param class-string<AbstractWorkflow>|callable(AbstractWorkflow, ?string): bool $workflowClass
-     * @param null|callable(AbstractWorkflow, ?string): bool                          $callback
+     * @param callable(AbstractWorkflow, ?string): bool|class-string<AbstractWorkflow> $workflowClass
+     * @param null|callable(AbstractWorkflow, ?string): bool                           $callback
      */
-    public function assertNotStarted(string|callable $workflowClass, ?callable $callback = null): void
+    public function assertNotStarted(callable|string $workflowClass, ?callable $callback = null): void
     {
         if (\is_callable($workflowClass)) {
             $callback = $workflowClass;
@@ -137,8 +137,8 @@ class WorkflowManagerFake implements WorkflowManagerInterface
         }
 
         PHPUnit::fail(
-            count($actualConnections) > 1
-                ? "The workflow [{$workflowClass}] was started, but on unexpected connections [". \implode(', ', $actualConnections).'].'
+            \count($actualConnections) > 1
+                ? "The workflow [{$workflowClass}] was started, but on unexpected connections [" . \implode(', ', $actualConnections) . '].'
                 : "The workflow [{$workflowClass}] was started, but on unexpected connection [{$actualConnections[0]}]",
         );
     }
