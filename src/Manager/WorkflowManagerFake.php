@@ -139,8 +139,8 @@ class WorkflowManagerFake implements WorkflowManagerInterface
         }
 
         PHPUnit::fail(
-            count($actualConnections) > 1
-                ? "The workflow [{$workflowClass}] was started, but on unexpected connections [". \implode(', ', $actualConnections).'].'
+            \count($actualConnections) > 1
+                ? "The workflow [{$workflowClass}] was started, but on unexpected connections [" . \implode(', ', $actualConnections) . '].'
                 : "The workflow [{$workflowClass}] was started, but on unexpected connection [{$actualConnections[0]}]",
         );
     }
