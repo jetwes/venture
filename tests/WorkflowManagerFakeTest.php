@@ -176,3 +176,24 @@ it('runs the beforeCreate hook', function (): void {
 
     expect($workflow)->name->toBe('::new-name::');
 });
+
+test('it can assert against multiple workflows of the same class', function (): void {
+    $this->managerFake->startWorkflow(new WorkflowWithParameter('first'));
+    $this->managerFake->startWorkflow(new WorkflowWithParameter('second'));
+    $this->managerFake->startWorkflow(new WorkflowWithParameter('third'));
+
+    $this->managerFake->assertStarted(
+        WorkflowWithParameter::class,
+        fn (WorkflowWithParameter $workflow) => $workflow->something === 'first',
+    );
+
+    $this->managerFake->assertStarted(
+        WorkflowWithParameter::class,
+        fn (WorkflowWithParameter $workflow) => $workflow->something === 'second',
+    );
+
+    $this->managerFake->assertStarted(
+        WorkflowWithParameter::class,
+        fn (WorkflowWithParameter $workflow) => $workflow->something === 'third',
+    );
+});
