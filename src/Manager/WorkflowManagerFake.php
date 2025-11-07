@@ -82,11 +82,16 @@ class WorkflowManagerFake implements WorkflowManagerInterface
     }
 
     /**
-     * @param class-string<AbstractWorkflow>                 $workflowClass
-     * @param null|callable(AbstractWorkflow, ?string): bool $callback
+     * @param class-string<AbstractWorkflow>|callable(AbstractWorkflow, ?string): bool $workflowClass
+     * @param null|callable(AbstractWorkflow, ?string): bool                          $callback
      */
-    public function assertStarted(string $workflowClass, ?callable $callback = null): void
+    public function assertStarted(string|callable $workflowClass, ?callable $callback = null): void
     {
+        if (\is_callable($workflowClass)) {
+            $callback = $workflowClass;
+            $workflowClass = $this->firstClosureParameterType($callback);
+        }
+
         PHPUnit::assertTrue(
             $this->hasStarted($workflowClass, $callback),
             "The expected workflow [{$workflowClass}] was not started.",
@@ -94,11 +99,16 @@ class WorkflowManagerFake implements WorkflowManagerInterface
     }
 
     /**
-     * @param class-string<AbstractWorkflow>                 $workflowClass
-     * @param null|callable(AbstractWorkflow, ?string): bool $callback
+     * @param class-string<AbstractWorkflow>|callable(AbstractWorkflow, ?string): bool $workflowClass
+     * @param null|callable(AbstractWorkflow, ?string): bool                          $callback
      */
-    public function assertNotStarted(string $workflowClass, ?callable $callback = null): void
+    public function assertNotStarted(string|callable $workflowClass, ?callable $callback = null): void
     {
+        if (\is_callable($workflowClass)) {
+            $callback = $workflowClass;
+            $workflowClass = $this->firstClosureParameterType($callback);
+        }
+
         PHPUnit::assertFalse(
             $this->hasStarted($workflowClass, $callback),
             "The unexpected [{$workflowClass}] workflow was started.",

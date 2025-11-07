@@ -197,3 +197,19 @@ test('it can assert against multiple workflows of the same class', function (): 
         fn (WorkflowWithParameter $workflow) => $workflow->something === 'third',
     );
 });
+
+test('it can assert started using only a closure', function (): void {
+    $this->managerFake->startWorkflow(new WorkflowWithParameter('::input::'));
+
+    $this->managerFake->assertStarted(
+        fn (WorkflowWithParameter $workflow) => $workflow->something === '::input::',
+    );
+});
+
+test('it can assert not started using only a closure', function (): void {
+    $this->managerFake->startWorkflow(new WorkflowWithParameter('::input::'));
+
+    $this->managerFake->assertNotStarted(
+        fn (WorkflowWithParameter $workflow) => $workflow->something === '::different::',
+    );
+});
