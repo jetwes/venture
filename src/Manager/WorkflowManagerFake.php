@@ -82,8 +82,8 @@ class WorkflowManagerFake implements WorkflowManagerInterface
     }
 
     /**
-     * @param class-string<AbstractWorkflow>|\Closure(AbstractWorkflow, ?string): bool        $workflowClass
-     * @param null|callable(AbstractWorkflow, ?string): bool $callback
+     * @param class-string<AbstractWorkflow>|\Closure(AbstractWorkflow, ?string): bool $workflowClass
+     * @param null|callable(AbstractWorkflow, ?string): bool                           $callback
      */
     public function assertStarted(\Closure|string $workflowClass, ?callable $callback = null): void
     {
@@ -101,8 +101,8 @@ class WorkflowManagerFake implements WorkflowManagerInterface
     }
 
     /**
-     * @param class-string<AbstractWorkflow>|\Closure(AbstractWorkflow, ?string): bool        $workflowClass
-     * @param null|callable(AbstractWorkflow, ?string): bool $callback
+     * @param class-string<AbstractWorkflow>|\Closure(AbstractWorkflow, ?string): bool $workflowClass
+     * @param null|callable(AbstractWorkflow, ?string): bool                           $callback
      */
     public function assertNotStarted(\Closure|string $workflowClass, ?callable $callback = null): void
     {
