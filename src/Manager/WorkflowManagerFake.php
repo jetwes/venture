@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace Sassnowski\Venture\Manager;
 
+use Illuminate\Support\Traits\ReflectsClosures;
 use PHPUnit\Framework\Assert as PHPUnit;
 use Sassnowski\Venture\AbstractWorkflow;
 use Sassnowski\Venture\Models\Workflow;
@@ -20,8 +21,10 @@ use Sassnowski\Venture\WorkflowDefinition;
 
 class WorkflowManagerFake implements WorkflowManagerInterface
 {
+    use ReflectsClosures;
+
     /**
-     * @var array<class-string<AbstractWorkflow>, array{workflow: AbstractWorkflow, connection: null|string}>
+     * @var array<class-string<AbstractWorkflow>, array<int, array{workflow: AbstractWorkflow, connection: null|string}>>
      */
     private array $started = [];
 
@@ -47,7 +50,7 @@ class WorkflowManagerFake implements WorkflowManagerInterface
             \Closure::fromCallable([$abstractWorkflow, 'beforeCreate']),
         );
 
-        $this->started[$abstractWorkflow::class] = [
+        $this->started[$abstractWorkflow::class][] = [
             'workflow' => $abstractWorkflow,
             'connection' => $connection,
         ];
@@ -69,18 +72,28 @@ class WorkflowManagerFake implements WorkflowManagerInterface
             return true;
         }
 
-        return $callback(
-            $this->started[$workflowClass]['workflow'],
-            $this->started[$workflowClass]['connection'],
-        );
+        foreach ($this->started[$workflowClass] as $started) {
+            if ($callback($started['workflow'], $started['connection'])) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
-     * @param class-string<AbstractWorkflow>                 $workflowClass
-     * @param null|callable(AbstractWorkflow, ?string): bool $callback
+     * @param class-string<AbstractWorkflow>|\Closure(AbstractWorkflow, ?string): bool $workflowClass
+     * @param null|callable(AbstractWorkflow, ?string): bool                           $callback
      */
-    public function assertStarted(string $workflowClass, ?callable $callback = null): void
+    public function assertStarted(\Closure|string $workflowClass, ?callable $callback = null): void
     {
+        if ($workflowClass instanceof \Closure) {
+            $callback = $workflowClass;
+
+            /** @var class-string<AbstractWorkflow> $workflowClass */
+            $workflowClass = $this->firstClosureParameterType($callback);
+        }
+
         PHPUnit::assertTrue(
             $this->hasStarted($workflowClass, $callback),
             "The expected workflow [{$workflowClass}] was not started.",
@@ -88,11 +101,18 @@ class WorkflowManagerFake implements WorkflowManagerInterface
     }
 
     /**
-     * @param class-string<AbstractWorkflow>                 $workflowClass
-     * @param null|callable(AbstractWorkflow, ?string): bool $callback
+     * @param class-string<AbstractWorkflow>|\Closure(AbstractWorkflow, ?string): bool $workflowClass
+     * @param null|callable(AbstractWorkflow, ?string): bool                           $callback
      */
-    public function assertNotStarted(string $workflowClass, ?callable $callback = null): void
+    public function assertNotStarted(\Closure|string $workflowClass, ?callable $callback = null): void
     {
+        if ($workflowClass instanceof \Closure) {
+            $callback = $workflowClass;
+
+            /** @var class-string<AbstractWorkflow> $workflowClass */
+            $workflowClass = $this->firstClosureParameterType($callback);
+        }
+
         PHPUnit::assertFalse(
             $this->hasStarted($workflowClass, $callback),
             "The unexpected [{$workflowClass}] workflow was started.",
@@ -110,12 +130,20 @@ class WorkflowManagerFake implements WorkflowManagerInterface
     ): void {
         $this->assertStarted($workflowClass, $callback);
 
-        $actualConnection = $this->started[$workflowClass]['connection'];
+        $actualConnections = [];
 
-        PHPUnit::assertSame(
-            $connection,
-            $actualConnection,
-            "The workflow [{$workflowClass}] was started, but on unexpected connection [{$actualConnection}]",
+        foreach ($this->started[$workflowClass] as $started) {
+            if ($started['connection'] === $connection) {
+                return;
+            }
+
+            $actualConnections[] = $started['connection'];
+        }
+
+        PHPUnit::fail(
+            \count($actualConnections) > 1
+                ? "The workflow [{$workflowClass}] was started, but on unexpected connections [" . \implode(', ', $actualConnections) . '].'
+                : "The workflow [{$workflowClass}] was started, but on unexpected connection [{$actualConnections[0]}]",
         );
     }
 }

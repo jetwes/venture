@@ -176,3 +176,76 @@ it('runs the beforeCreate hook', function (): void {
 
     expect($workflow)->name->toBe('::new-name::');
 });
+
+test('assertStarted passes against multiple workflows of the same class', function (): void {
+    $this->managerFake->startWorkflow(new WorkflowWithParameter('first'));
+    $this->managerFake->startWorkflow(new WorkflowWithParameter('second'));
+    $this->managerFake->startWorkflow(new WorkflowWithParameter('third'));
+
+    $this->managerFake->assertStarted(
+        WorkflowWithParameter::class,
+        fn (WorkflowWithParameter $workflow) => 'first' === $workflow->something,
+    );
+
+    $this->managerFake->assertStarted(
+        WorkflowWithParameter::class,
+        fn (WorkflowWithParameter $workflow) => 'second' === $workflow->something,
+    );
+
+    $this->managerFake->assertStarted(
+        WorkflowWithParameter::class,
+        fn (WorkflowWithParameter $workflow) => 'third' === $workflow->something,
+    );
+});
+
+test('assertStarted fails against multiple workflows of the same class', function (): void {
+    $this->managerFake->startWorkflow(new WorkflowWithParameter('first'));
+    $this->managerFake->startWorkflow(new WorkflowWithParameter('second'));
+    $this->managerFake->startWorkflow(new WorkflowWithParameter('third'));
+
+    $this->managerFake->assertStarted(
+        WorkflowWithParameter::class,
+        fn (WorkflowWithParameter $workflow) => 'fourth' === $workflow->something,
+    );
+})->throws(
+    AssertionFailedError::class,
+    'The expected workflow [Stubs\WorkflowWithParameter] was not started',
+);
+
+test('assertStarted passes if the callback returns true', function (): void {
+    $this->managerFake->startWorkflow(new WorkflowWithParameter('::input::'));
+
+    $this->managerFake->assertStarted(
+        fn (WorkflowWithParameter $workflow) => '::input::' === $workflow->something,
+    );
+});
+
+test('assertStarted fails if the callback returns false', function (): void {
+    $this->managerFake->startWorkflow(new WorkflowWithParameter('::input::'));
+
+    $this->managerFake->assertStarted(
+        fn (WorkflowWithParameter $workflow) => '::different::' === $workflow->something,
+    );
+})->throws(
+    AssertionFailedError::class,
+    'The expected workflow [Stubs\WorkflowWithParameter] was not started',
+);
+
+test('assertNotStarted passes if the callback returns false', function (): void {
+    $this->managerFake->startWorkflow(new WorkflowWithParameter('::input::'));
+
+    $this->managerFake->assertNotStarted(
+        fn (WorkflowWithParameter $workflow) => '::different::' === $workflow->something,
+    );
+});
+
+test('assertNotStartedFails fails if the callback returns true', function (): void {
+    $this->managerFake->startWorkflow(new WorkflowWithParameter('::input::'));
+
+    $this->managerFake->assertNotStarted(
+        fn (WorkflowWithParameter $workflow) => '::input::' === $workflow->something,
+    );
+})->throws(
+    AssertionFailedError::class,
+    'The unexpected [Stubs\WorkflowWithParameter] workflow was started',
+);
